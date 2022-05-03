@@ -29,7 +29,7 @@ app.get('/test', (req, res) => {
   })
 })
 
-app.post('/test', (req, res) => {
+app.post('/testpost', (req, res) => {
   console.log(req.body);
   console.log(Object.values(req.body))
 
