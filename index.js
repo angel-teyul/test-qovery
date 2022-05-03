@@ -31,11 +31,21 @@ app.get('/test', (req, res) => {
 
 app.post('/testpost', (req, res) => {
   console.log(req.body);
-  console.log(Object.values(req.body))
+  console.log('values:', Object.values(req.body))
 
-  res.json({
-    msg: 'Conexion exitosa con POST a test',
-    data: req.body
+  const values = Object.values(req.body)
+  var sql = 'insert into tbtest (code, test) values(?,?)';
+
+  db.query(sql, values, (err, data) => {
+    if (err) {
+      console.log(err);
+      return err;
+    }
+
+    res.json({
+      mensaje: 'agregado!',
+      data
+    })
   })
 })
 
