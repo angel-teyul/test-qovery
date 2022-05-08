@@ -51,6 +51,7 @@ app.post('/insertar_usuario', (req, res) => {
 
 app.post('/actualizar_usuario', (req, res) => {
   const values = Object.values(req.body)
+  const CodigoPersona = req.body.CodigoPersona;
   var sql = 'update tbpersona set CodigoTipoPersona=?, CodigoEstado=?, Identificacion=?, PrimerNombre=?, SegundoNombre=?, PrimerApellido=?, SegundoApellido=?, FechaNacimiento=?, Telefono=?, Direccion=?, CorreoElectronico=?, Contrasena=? where CodigoPersona=?';
 
   db.query(sql, values, (err, data) => {
@@ -65,16 +66,33 @@ app.post('/actualizar_usuario', (req, res) => {
       return err;
     }
 
-    res.json({
-      confirmation: true,
-      msg: 'Datos actualizados con exito!'
+    var sqlNewData = 'select CodigoPersona, TipoPersona, Estado, Identificacion, PrimerNombre, SegundoNombre, PrimerApellido, SegundoApellido, FechaNacimiento, Telefono, Direccion, CorreoElectronico, Contrasena from tbpersona PE inner join tbtipopersona TP on PE.CodigoTipoPersona = TP.CodigoTipoPersona inner join tbestado ES on PE.CodigoEstado = ES.CodigoEstado where CodigoPersona = ?';
+
+    db.query(sqlNewData, CodigoPersona, (err, data) => {
+      if (err) {
+        console.log(err);
+        res.json({
+          confirmation: false,
+          msg: "Datos actualizados no retornados",
+          sqlmsg: err.sqlMessage,
+          error: err.sql
+        })
+        return err;
+      }
+
+      if (data[0] != undefined) {
+        datos = data[0]
+        res.json(datos)
+      } else {
+        res.json(null)
+      }
     })
   })
 })
 
 app.post('/eliminar_usuario', (req, res) => {
-  console.log(req.body)
   const values = Object.values(req.body)
+  const CodigoPersona = req.body.CodigoPersona
   var sql = 'update tbpersona set CodigoEstado=9 where CodigoPersona=?';
 
   db.query(sql, values, (err, data) => {
@@ -89,15 +107,31 @@ app.post('/eliminar_usuario', (req, res) => {
       return err;
     }
 
-    res.json({
-      confirmation: true,
-      msg: 'Usuario eliminado con exito!'
+    var sqlNewData = 'select CodigoPersona, TipoPersona, Estado, Identificacion, PrimerNombre, SegundoNombre, PrimerApellido, SegundoApellido, FechaNacimiento, Telefono, Direccion, CorreoElectronico, Contrasena from tbpersona PE inner join tbtipopersona TP on PE.CodigoTipoPersona = TP.CodigoTipoPersona inner join tbestado ES on PE.CodigoEstado = ES.CodigoEstado where CodigoPersona = ?';
+
+    db.query(sqlNewData, CodigoPersona, (err, data) => {
+      if (err) {
+        console.log(err);
+        res.json({
+          confirmation: false,
+          msg: "Datos actualizados no retornados",
+          sqlmsg: err.sqlMessage,
+          error: err.sql
+        })
+        return err;
+      }
+
+      if (data[0] != undefined) {
+        datos = data[0]
+        res.json(datos)
+      } else {
+        res.json(null)
+      }
     })
   })
 })
 
 app.get('/obtener_codigo_usuario', (req, res) => {
-  console.log(req.body)
   const values = Object.values(req.body)
   var sql = 'select CodigoPersona from tbpersona where CorreoElectronico=?';
 
@@ -114,16 +148,9 @@ app.get('/obtener_codigo_usuario', (req, res) => {
     }
 
     if (data[0] != undefined) {
-      res.json({
-        confirmation: true,
-        msg: 'Usuario encontrado con exito!',
-        CodigoPersona: data[0].CodigoPersona
-      })
+      res.json(data[0])
     } else {
-      res.json({
-        confirmation: false,
-        msg: 'Usuario no encontrado'
-      })
+      res.json(null)
     }
   })
 })
@@ -148,16 +175,10 @@ app.post('/login', (req, res) => {
     }
 
     if (data[0] != undefined) {
-      res.json({
-        confirmation: true,
-        msg: 'Login completado!',
-        datos: data[0]
-      })
+      datos = data[0]
+      res.json(datos)
     } else {
-      res.json({
-        confirmation: false,
-        msg: 'Datos incorrectos o usuario no existente'
-      })
+      res.json(null)
     }
   })
 })
