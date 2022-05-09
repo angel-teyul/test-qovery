@@ -183,6 +183,167 @@ app.post('/login', (req, res) => {
   })
 })
 
+// QUERYS_CREDITOS
+
+app.post('/solicitud', (req, res) => {
+  const values = [req.body.CodigoPersona, req.body.FechaSolicitud, req.body.MontoInicial, req.body.PlazoPago, 2]
+
+  var sql = 'insert into tbsolicitud (CodigoPersona, FechaSolicitud, MontoInicial, PlazoPago, CodigoEstado) values(?,?,?,?,?)';
+
+  db.query(sql, values, (err, data) => {
+    if (err) {
+      console.log(err);
+      res.json({
+        confirmation: false,
+        msg: "Solicitud no completada",
+        sqlmsg: err.sqlMessage,
+        error: err.sql
+      })
+      return err;
+    }
+
+    var mes = parseInt(`${req.body.FechaSolicitud}`.substr(6, 1)) + 1;
+    var left = `${req.body.FechaSolicitud}`.substr(0, 6);
+    var right = `${req.body.FechaSolicitud}`.substr(7, 3)
+    var nuevaFecha = `${left}${mes}${right}`;
+
+    const newData = {
+      CodigoPersona: req.body.CodigoPersona,
+      CodigoEstado: 2,
+      FechaApertura: req.body.FechaSolicitud,
+      PlazoPago: req.body.PlazoPago,
+      MontoInicial: req.body.MontoInicial,
+      Interes: 0.07,
+      MontoMora: 0,
+      FechaPago: nuevaFecha
+    }
+
+    const newValues = Object.values(newData)
+
+    var sqlNewData = 'insert into tbcredito (CodigoPersona, CodigoEstado, FechaApertura, PlazoPago, MontoInicial, Interes, MontoMora, FechaPago) values(?,?,?,?,?,?,?,?)';
+
+    db.query(sqlNewData, newValues, (err, data) => {
+      if (err) {
+        console.log(err);
+        res.json({
+          confirmation: false,
+          msg: "Credito no registrado",
+          sqlmsg: err.sqlMessage,
+          error: err.sql
+        })
+        return err;
+      }
+
+      res.json({
+        confirmation: true,
+        msg: 'Solicitud de credito registrada con exito!'
+      })
+    })
+  })
+})
+
+app.post('/eliminar_credito', (req, res) => {
+  const values = Object.values(req.body)
+  var datetime = new Date();
+  let myDate = (datetime.getFullYear()) + "-" + ("0" + (datetime.getMonth() + 1)).slice(-2) + "-" + ("0" + (datetime.getDate())).slice(-2);
+
+  var sql = `update tbcredito set CodigoEstado=9, FechaCierre="${myDate}" where CodigoCredito=?`;
+
+  db.query(sql, values, (err, data) => {
+    if (err) {
+      console.log(err);
+      res.json({
+        confirmation: false,
+        msg: "Credito no eliminado",
+        sqlmsg: err.sqlMessage,
+        error: err.sql
+      })
+      return err;
+    }
+
+    res.json({
+      confirmation: true,
+      msg: 'Credito eliminado con exito!'
+    })
+  })
+})
+
+
+app.get('/obtener_creditos', (req, res) => {
+  const values = Object.values(req.body)
+  var sql = 'select CodigoCredito, Estado, FechaApertura, FechaCierre, PlazoPago, MontoInicial, Interes, MontoMora, FechaPago from tbcredito CR inner join tbestado ES on CR.CodigoEstado = ES.CodigoEstado where CodigoPersona=?';
+
+  db.query(sql, values, (err, data) => {
+    if (err) {
+      console.log(err);
+      res.json({
+        confirmation: false,
+        msg: "Error al buscar creditos",
+        sqlmsg: err.sqlMessage,
+        error: err.sql
+      })
+      return err;
+    }
+
+    if (data[0] != undefined) {
+      res.json(data)
+    } else {
+      res.json(null)
+    }
+  })
+})
+
+app.get('/historial_crediticio', (req, res) => {
+  const values = Object.values(req.body)
+  var sql = 'select * from tbhistorialcrediticio where CodigoCredito=?';
+
+  db.query(sql, values, (err, data) => {
+    if (err) {
+      console.log(err);
+      res.json({
+        confirmation: false,
+        msg: "Error al buscar creditos",
+        sqlmsg: err.sqlMessage,
+        error: err.sql
+      })
+      return err;
+    }
+
+    if (data[0] != undefined) {
+      res.json(data)
+    } else {
+      res.json(null)
+    }
+  })
+})
+
+app.get('/solicitudes_ingresadas', (req, res) => {
+  const values = Object.values(req.body)
+  var sql = 'select CodigoSolicitud, FechaSolicitud, MontoInicial, PlazoPago, Estado from tbsolicitud SO inner join tbestado ES on SO.CodigoEstado = ES.CodigoEstado where CodigoPersona=?';
+
+  db.query(sql, values, (err, data) => {
+    if (err) {
+      console.log(err);
+      res.json({
+        confirmation: false,
+        msg: "Error al buscar solicitudes",
+        sqlmsg: err.sqlMessage,
+        error: err.sql
+      })
+      return err;
+    }
+
+    if (data[0] != undefined) {
+      res.json(data)
+    } else {
+      res.json(null)
+    }
+  })
+})
+
+
+// Servidor a la escucha
+
 app.listen(PORT, () => {
   console.log(`Server listening on port: ${PORT}`);
 })
