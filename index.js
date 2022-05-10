@@ -82,6 +82,10 @@ app.post('/actualizar_usuario', (req, res) => {
 
       if (data[0] != undefined) {
         datos = data[0]
+
+        datos.confirmation = true;
+
+        console.log(datos)
         res.json(datos)
       } else {
         res.json(null)
@@ -338,6 +342,68 @@ app.get('/solicitudes_ingresadas', (req, res) => {
     } else {
       res.json(null)
     }
+  })
+})
+
+
+app.post('/pagar_credito', (req, res) => {
+  const values = Object.values(req.body);
+  const UsuarioIngresa = req.body.UsuarioIngresa;
+  const CodigoCredito = req.body.CodigoCredito;
+  const Mora = req.body.Mora;
+
+  var sql = 'insert into tbhistorialcrediticio (CodigoCredito, Monto, Mora, FechaPago, UsuarioIngresa) values (?,?,?,?,?)';
+
+  db.query(sql, values, (err, data) => {
+    if (err) {
+      console.log(err);
+      res.json({
+        confirmation: false,
+        msg: "Error al pagar credito",
+        sqlmsg: err.sqlMessage,
+        error: err.sql
+      })
+      return err;
+    }
+
+    const newValues = [Mora, CodigoCredito]
+
+    var sqlUpdate = `update tbcredito set MontoMora=MontoMora-? where CodigoCredito=?`;
+
+    db.query(sqlUpdate, newValues, (err, data) => {
+      if (err) {
+        console.log(err);
+        res.json({
+          confirmation: false,
+          msg: "Error al actualizar mora",
+          sqlmsg: err.sqlMessage,
+          error: err.sql
+        })
+        return err;
+      }
+
+      var newSql = 'select CodigoCredito, Estado, FechaApertura, FechaCierre, PlazoPago, MontoInicial, Interes, MontoMora, FechaPago from tbcredito CR inner join tbestado ES on CR.CodigoEstado = ES.CodigoEstado where CodigoPersona=?';
+
+      db.query(newSql, UsuarioIngresa, (err, data) => {
+        if (err) {
+          console.log(err);
+          res.json({
+            confirmation: false,
+            msg: "Error al buscar creditos",
+            sqlmsg: err.sqlMessage,
+            error: err.sql
+          })
+          return err;
+        }
+
+        if (data[0] != undefined) {
+          res.json(data)
+        } else {
+          res.json(null)
+        }
+      })
+    })
+
   })
 })
 
