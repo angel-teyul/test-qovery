@@ -137,7 +137,7 @@ app.post('/eliminar_usuario', (req, res) => {
 
 app.get('/obtener_codigo_usuario', (req, res) => {
   const values = Object.values(req.body)
-  var sql = 'select CodigoPersona from tbpersona where CorreoElectronico=?';
+  var sql = 'select * from tbpersona where CorreoElectronico=?';
 
   db.query(sql, values, (err, data) => {
     if (err) {
