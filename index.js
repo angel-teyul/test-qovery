@@ -274,9 +274,8 @@ app.post('/eliminar_credito', (req, res) => {
 
 
 app.get('/obtener_creditos', (req, res) => {
-  const CodigoPersona = req.body.CodigoPersona;
-  const values = [CodigoPersona, CodigoPersona];
-  var sql = `create temporary table tbsaldo select ifnull(sum(Monto), 0) as TotalPagado, CodigoCredito from tbhistorialcrediticio where CodigoCredito in (select CodigoCredito from tbhistorialcrediticio group by CodigoCredito) and UsuarioIngresa = ? group by CodigoCredito; select CR.CodigoCredito, Estado, FechaApertura, FechaCierre, PlazoPago, MontoInicial, Interes, MontoMora, FechaPago, ifnull(TotalPagado, 0) as Pagado from tbcredito CR inner join tbestado ES on CR.CodigoEstado = ES.CodigoEstado left join tbsaldo SA on CR.CodigoCredito = SA.CodigoCredito where CodigoPersona = ?; drop temporary table tbsaldo;`;
+  const values = Object.values(req.body)
+  var sql = 'select CodigoCredito, Estado, FechaApertura, FechaCierre, PlazoPago, MontoInicial, Interes, MontoMora, FechaPago from tbcredito CR inner join tbestado ES on CR.CodigoEstado = ES.CodigoEstado where CodigoPersona=?';
 
   db.query(sql, values, (err, data) => {
     if (err) {
@@ -383,11 +382,9 @@ app.post('/pagar_credito', (req, res) => {
         return err;
       }
 
-      const refreshCreditos = [UsuarioIngresa, UsuarioIngresa]
+      var newSql = 'select CodigoCredito, Estado, FechaApertura, FechaCierre, PlazoPago, MontoInicial, Interes, MontoMora, FechaPago from tbcredito CR inner join tbestado ES on CR.CodigoEstado = ES.CodigoEstado where CodigoPersona=?';
 
-      var newSql = `create temporary table tbsaldo select ifnull(sum(Monto), 0) as TotalPagado, CodigoCredito from tbhistorialcrediticio where CodigoCredito in (select CodigoCredito from tbhistorialcrediticio group by CodigoCredito) and UsuarioIngresa = ? group by CodigoCredito; select CR.CodigoCredito, Estado, FechaApertura, FechaCierre, PlazoPago, MontoInicial, Interes, MontoMora, FechaPago, ifnull(TotalPagado, 0) as Pagado from tbcredito CR inner join tbestado ES on CR.CodigoEstado = ES.CodigoEstado left join tbsaldo SA on CR.CodigoCredito = SA.CodigoCredito where CodigoPersona = ?; drop temporary table tbsaldo;`;
-
-      db.query(newSql, refreshCreditos, (err, data) => {
+      db.query(newSql, UsuarioIngresa, (err, data) => {
         if (err) {
           console.log(err);
           res.json({
